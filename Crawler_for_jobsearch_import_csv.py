@@ -4,58 +4,53 @@ import requests
 from bs4 import BeautifulSoup
 
 os.system("clear")
-
-
-def write_company(company):
-    file = open(f"{company['name']}.csv", mode="w")
-    writer = csv.writer(file)
-    writer.writerow(["place", "title", "time", "pay", "date"])
-    for job in company["jobs"]:
-      writer.writerow(list(job.values()))
-
-
 alba_url = "http://www.alba.co.kr"
 
-alba_request = requests.get(alba_url)
-alba_soup = BeautifulSoup(alba_request.text, "html.parser")
-main = alba_soup.find("div", {"id": "MainSuperBrand"})
-brands = main.find_all("li", {"class": "impact"})
-for brand in brands:
-    link = brand.find("a", {"class": "goodsBox-info"})
-    name = brand.find("span", {"class": "company"})
-    if link and name:
-        link = link["href"]
-        name = name.text
-        company = {'name': name, 'jobs': []}
-        jobs_request = requests.get(link)
-        jobs_soup = BeautifulSoup(jobs_request.text, "html.parser")
-        tbody = jobs_soup.find("div", {"id": "NormalInfo"}).find("tbody")
-        rows = tbody.find_all("tr", {"class": ""})
-        for row in rows:
-            local = row.find("td", {"class": "local"})
-            if local:
-                local = local.text.replace(u'\xa0', ' ')
-            title = row.find("td", {"class": "title"})
-            if title:
-                title = title.find("a").find("span", {
-                    "class": "company"
-                }).text.strip()
-                title = title.replace(u'\xa0', ' ')
-            time = row.find("td", {"class": "data"})
-            if time:
-                time = time.text.replace(u'\xa0', ' ')
-            pay = row.find("td", {"class": "pay"})
-            if pay:
-                pay = pay.text.replace(u'\xa0', ' ')
-            date = row.find("td", {"class": "regDate"})
-            if date:
-                date = date.text.replace(u'\xa0', ' ')
-            job = {
-                "place": local,
-                "title": title,
-                "time": time,
-                "pay": pay,
-                "date": date
-            }
-            company['jobs'].append(job)
-        write_company(company)
+def company_list(url):
+    result=requests.get(url)
+    soup=BeautifulSoup(result.text,"html.parser")
+    results=soup.find_all("li",{"class":"impact"})
+    companies_link= []
+   
+    for result in results:
+        com_lnk = result.find("a")["href"]
+        companies_link.append(com_lnk)
+
+    for company in companies_link:
+        job_list(company)
+
+def job_list(link):
+     alba = []
+     result=requests.get(f"{link}")
+     soup=BeautifulSoup(result.text,"html.parser")
+     results = soup.find("tbody").find_all("tr")
+#    results=soup.find_all("tbody",{"tr class":None})
+#    print(results)
+     company =link.split(".")[0].split("//")[1]
+     for result in results[0::2]:
+   #    print(result)
+        if {"class":"summary view"} in result:
+            pass
+        else:
+            place = result.find("td", {"class": "local first"}).text
+            title=result.find("span",{"class": "title"}).text
+            time=result.find("span", {"class": "time"}).text
+            pay=result.find("td", {"class": "pay"}).text
+            date=result.find("td", {"class": "regDate last"}).text
+            list={"company":company,"place":place,"title":title,"time":time,"pay":pay,"date":date}
+            alba.append(list)
+     save(alba)
+
+def save(jobs):
+    title= jobs[0]["company"]
+    file = open(f"{title}.csv", "w", -1, "utf-8")
+    #print(len(jobs))
+    writer = csv.writer(file)
+    writer.writerow(["place", "title", "time", "pay", "date"])
+    for i in range(len(jobs)):
+        writer.writerow(list(jobs[i].values()))
+    return
+
+
+
+company_list(alba_url)
