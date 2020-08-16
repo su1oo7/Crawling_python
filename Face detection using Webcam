@@ -1,0 +1,39 @@
+import cv2 
+import sys
+
+#cascPath=sys.argv[1]
+#faceCascade=cv2.CascadeClassifier(cascPath)
+#예제에선 위 코드로 잘 하던데 path error떠서 gg
+faceCascade = cv2.CascadeClassifier(r"C:\Users\USER\anaconda3\envs\suu\Lib\site-packages\cv2\data\haarcascade_frontalface_default.xml")
+
+
+cap = cv2.VideoCapture(0)
+cap.set(cv2.CAP_PROP_FRAME_WIDTH,320)
+cap.set(cv2.CAP_PROP_FRAME_HEIGHT,320)
+
+while (True):
+    ret, frame = cap.read()
+    gray = cv2.cvtColor(frame,cv2.COLOR_BGR2GRAY)
+    #faces = faceCascade.detectMultiScale(gray, 1.1, 5,(30,30),cv2.CV_HAAR_SCALE_IMAGE)
+    #cv.CV_~는 이전 버전의 cv에서 제공하는 module? cv3에선 아래와 같이 바뀜
+    faces = faceCascade.detectMultiScale(
+        gray, 
+        scaleFactor=1.1,
+        minNeighbors=5,
+        minSize=(30,30),
+        flags=cv2.CASCADE_SCALE_IMAGE
+    )
+
+    for (x,y,z,w) in faces:
+        cv2.rectangle(frame, (x,y),(x+z,y+w),(0,255,0),2)
+    
+    cv2. imshow("VideoFrame",frame)
+    
+    #if cv2.waitKey(1)>0:break
+    if cv2.waitKey(1) == ord('q'): break
+    #if cv2.waitKey(1) == ord('q'): break으로 사용할 경우, q가 입력될 때 while문을 종료합니다.
+
+#할당 메모리 해제
+cap.release()
+#AllWindow는 모든 창을 닫지만 cv2.destroyWindow("윈도우 창 제목")을 이용하여 특정 윈도우 창만 닫을 수 있습니다.
+cv2.destroyAllWindows()
